@@ -1,0 +1,39 @@
+/* Base styles  */
+
+:root {
+	font-family: Menlo, monospace;
+  line-height: 1.6;
+}
+
+.container {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-gap: 0.25em;
+  font-size: 2em;
+}
+
+.item {
+	color: white;
+	background-color: black;
+	padding: 1em;
+	text-align: center;
+}
+
+/* ✨ Element-query things kinda! ✨ */
+
+.queried {
+	--named-breakpoints: 100px medium 200px large 300px huge;
+}
+
+.queried.medium {
+	background-color: green;
+}
+
+.queried.large {
+	background-color: yellow;
+}
+
+.queried.huge {
+	background-color: red;
+}
+
