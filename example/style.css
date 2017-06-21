@@ -1,11 +1,12 @@
 /* ✨ Element queries ✨
- *    Via a --named-breakpoints custom property with syntax like:
- *    	[length] [class name] [length] (etc)
+ *    Via a --breakpoints custom property with alternating names and lengths, e.g.
+ *    	--breakpoints: .small 5em .medium 10em .large;
  *    Class names are applied when an element’s width is between adjacent lengths.
  */
  
 .queried {
-	--named-breakpoints: 2em medium 5em large 8em huge;
+	--breakpoints: 2em .medium 5em .large 8em .huge;
+	color: red;
 }
 
 .queried.medium {
@@ -38,5 +39,5 @@
 	background-color: black;
 	padding: 1em;
 	text-align: center;
-  font-size: 2em;
+	font-size: 2em;
 }

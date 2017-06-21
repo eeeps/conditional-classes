@@ -1,13 +1,29 @@
+<!doctype html>
+<head>
+<meta charset="utf-8" />
+<title>Sorta-simple</title>
+<link rel="stylesheet" href="style.css" />
+<script src="ResizeObserverPolyfill.js"></script>
+<script src="../poofquery.js"></script>
+</head>
+
 <h1>Sorta-simple element queries</h1>
 
 <div class="container">
 	<div class="item queried">1</div>
 	<div class="item queried">2</div>
-	<div class="item queried"><span title="Don't observe me tho">3</span></div>
+	<div class="item queried">3</div>
 	<div class="item">4</div>
 	<div class="item">5</div>
 	<div class="item">6</div>
 </div>
 
-<p>This uses <a href="https://wicg.github.io/ResizeObserver/">ResizeObserver</a>, and will only work in Chrome with “Experimental Web Platform Features” enabled (chrome://flags/#enable-experimental-web-platform-features)</p>
-
+<script>
+function addADiv() {
+	let div = document.createElement('div');
+	div.classList.add('item');
+	div.classList.add('queried');
+	div.style.height = '50px';
+	document.body.appendChild(div);
+}
+</script>

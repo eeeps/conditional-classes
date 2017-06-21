@@ -1,85 +1,118 @@
+// poofquery.js
+// Poof! It's element queries!
+// (While I wait for Houdini.)
+// ((It's a poof of concept.))
 
-// Prevent --named-breakpoints from cascading
+
+// prevent --breakpoints from cascading
 
 let sheet = document.createElement( 'style' );
-sheet.innerHTML = "* { --named-breakpoints: initial; }";
+sheet.innerHTML = "* { --breakpoints: initial; }";
 document.head.appendChild( sheet );
 
 
-// Set up the ResizeObserver
+// use the .breakpoints that we’ll store on each observed element’s DOM node
+// to check-and-possibly-toggle classes whenever the element is resized
 
-// Use the .breakpoints and .classNames arrays that we’ll store on each observed element’s DOM node to check/possibly-toggle classes whenever the element is resized.
-
-let r = new ResizeObserver( entries => {
-
+const ro = new ResizeObserver( entries => {
+	
 	for ( let entry of entries ) {
-		
-		for ( let i = 0, l = entry.target.breakpoints.length; i < l; i++ ) {
+		for ( let i = 0, l = entry.target.breakpoints.lengths.length; i < l; i++ ) {
 			
-			if ( ( entry.contentRect.width >= entry.target.breakpoints[ i ] ) &&
-			     ( ( entry.contentRect.width < entry.target.breakpoints[ i + 1 ] ) ||
-			       ( entry.target.breakpoints[ i + 1 ] === undefined ) ) ) {
-
-				entry.target.classList.add( entry.target.classNames[ i ] );
-
+			if ( entry.contentRect.width >= entry.target.breakpoints.lengths[ i ] &&
+			     entry.contentRect.width < ( entry.target.breakpoints.lengths[ i + 1 ] || Infinity ) ) {
+				
+				entry.target.classList.add( 
+					entry.target.breakpoints.names[ i ]
+				);
+				
 			} else {
-
-				entry.target.classList.remove( entry.target.classNames[ i ] );
-
+				
+				entry.target.classList.remove(
+					entry.target.breakpoints.names[ i ]
+				);
+				
 			}
 		
 		}
-	
 	}
 
 } );
 
 
-// Initialize + start observing DOM nodes
+// as elements come into the DOM, check to see if they have --breakpoints
+// if they do, store .breakpoints on their DOM node and start resizeObserving them
 
-// loop over every element in the document (!)
-for ( let element of document.getElementsByTagName( '*' ) ) {
-	
-	// if an element has a --named-breakpoints, store its breakpoints and names on its DOM node, and start ResizeObserver-ing it.
+const mo = new MutationObserver( ( mutations ) => {
 
-	let namedBreakpointsValue = window.getComputedStyle( element )
-		.getPropertyValue( '--named-breakpoints' );
-	
-	if ( namedBreakpointsValue !== '' ) {
-		
-		let namedBreakpoints = namedBreakpointsValue
-			.trim().split( ' ' ).filter( ( item ) => item !== '' );
-	
-		// breakpoints is an array of lengths (in pixels)
-		// e.g., [ 100, 200, 300 ]
-		element.breakpoints = namedBreakpoints
-			.filter( ( item, index ) => index % 2 === 0 )
-			.map( ( item ) => getComputedLength( item, element ) );
-
-		// classNames is an array of, well, class names
-		// e.g., [ "small", "medium", "large" ]
-		element.classNames = namedBreakpoints
-			.filter( ( item, index ) => index % 2 !== 0 );
-		
-		r.observe( element );
-
+	for ( let mutation of mutations ) {
+		for ( let newNode of mutation.addedNodes ) {
+			if ( newNode.nodeType === 1 ) { // elements only, no text!
+			
+				let breakpointsValue = window.getComputedStyle( newNode )
+					.getPropertyValue( '--breakpoints' );
+				
+				if ( breakpointsValue !== '' ) {
+				
+					newNode.breakpoints = parseBreakpoints( breakpointsValue, newNode );
+					ro.observe( newNode );
+				
+				}
+				
+			}
+		}
 	}
 
+} );
+
+
+// take a --breakpoints value and return a normalized object
+// with an array of .names and an array of .lengths
+// e.g. parseBreakpoints('.small 80px .medium 10em .large', el)
+//      → { names:   [ 'small', 'medium', 'large' ],
+//          lengths: [ 0, 80, 160 ] }
+
+const parseBreakpoints = function( breakpointsString, element ) { // need the element to calculate ems based on context
+
+	let breakpointsArray = breakpointsString
+		.trim().split( ' ' ).filter( ( item ) => item !== '' );
+	
+	// if breakPointsString starts with a name, prepend w/ a length of 0px
+	// this ensures that lengths are on the evens and that names[ i ] has a min-width of lengths[ i ]
+	if ( breakpointsArray[ 0 ].charAt( 0 ) === "." ) {
+		breakpointsArray.unshift( "0px" );
+	}
+	
+	return {
+		
+		names: breakpointsArray
+			.filter( ( item, index ) => index % 2 !== 0 ) // odds
+			.map( ( item ) => item.replace( /^\./, '' ) ), // get rid of leading dots
+		
+		lengths: breakpointsArray
+			.filter( ( item, index ) => index % 2 === 0 ) // evens
+			.map( ( item ) => getComputedLength( item, element ) )
+		
+	}
+	
 }
 
-// Function copied from Martin Auswöger
-// https://github.com/ausi/cq-prolyfill/blob/master/cq-prolyfill.js#L1037
-//
-// Used under MIT license:
-// https://github.com/ausi/cq-prolyfill/blob/master/LICENSE
-//
+
 /**
  * Get the computed length in pixels of a CSS length value
+// e.g. getComputedLength( '10em', el ) → 160
  *
  * @param  {string}  value
  * @param  {Element} element
  * @return {number}
  */
+// someday this will be as easy as CSSUnitValue.parse('5em').to('px')
+// (wait, how will it know the em context? will it?)
+// but for now, using a function copied from Martin Auswöger
+// https://github.com/ausi/cq-prolyfill/blob/master/cq-prolyfill.js#L1037
+// under MIT license:
+// https://github.com/ausi/cq-prolyfill/blob/master/LICENSE
+//
 function getComputedLength(value, element) {
 
 	var LENGTH_REGEXP = /^(-?(?:\d*\.)?\d+)(em|ex|ch|rem|vh|vw|vmin|vmax|px|mm|cm|in|pt|pc)$/i;
@@ -122,3 +155,8 @@ function getComputedLength(value, element) {
 	}
 	return parseFloat(getComputedStyle(element).fontSize) * value;
 }
+
+
+// start MutationObserving the document
+mo.observe( document, { childList: true, subtree: true } );
+
