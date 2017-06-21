@@ -3,11 +3,12 @@
 // (While I wait for Houdini.)
 // ((It's a poof of concept.))
 
+( function() {
 
 // prevent --breakpoints from cascading
 
 let sheet = document.createElement( 'style' );
-sheet.innerHTML = "* { --breakpoints: initial; }";
+sheet.innerHTML = '* { --breakpoints: initial; }';
 document.head.appendChild( sheet );
 
 
@@ -79,8 +80,8 @@ const parseBreakpoints = function( breakpointsString, element ) { // need the el
 	
 	// if breakPointsString starts with a name, prepend w/ a length of 0px
 	// this ensures that lengths are on the evens and that names[ i ] has a min-width of lengths[ i ]
-	if ( breakpointsArray[ 0 ].charAt( 0 ) === "." ) {
-		breakpointsArray.unshift( "0px" );
+	if ( breakpointsArray[ 0 ].charAt( 0 ) === '.' ) {
+		breakpointsArray.unshift( '0px' );
 	}
 	
 	return {
@@ -93,9 +94,9 @@ const parseBreakpoints = function( breakpointsString, element ) { // need the el
 			.filter( ( item, index ) => index % 2 === 0 ) // evens
 			.map( ( item ) => getComputedLength( item, element ) )
 		
-	}
+	};
 	
-}
+};
 
 
 /**
@@ -160,3 +161,4 @@ function getComputedLength(value, element) {
 // start MutationObserving the document
 mo.observe( document, { childList: true, subtree: true } );
 
+} )();
