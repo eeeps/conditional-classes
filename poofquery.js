@@ -85,9 +85,9 @@ const mo = new MutationObserver( ( mutations ) => {
 // (which we attach to the element)
 // e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
 //      → [
-//         { min: 0, max: 80, classNames: ['small', 'hide'] },
-//         { min: 80, max: 160, classNames: ['medium'] },
-//         { min: 160, max: Infinity, classNames: ['large'] }
+//         { min: 0, max: 80, classNames: Set{ 'small', 'hide' } },
+//         { min: 80, max: 160, classNames: Set{ 'medium' } },
+//         { min: 160, max: Infinity, classNames: Set{ 'large' } }
 //        ]
 
 const parsePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
@@ -98,7 +98,7 @@ const parsePoofpoints = function( poofpointsString, element ) { // need the elem
 	let currentRange = { min: poofpointsArray.shift() };
 
 	for ( item of poofpointsArray ) {
-		if ( item.constructor === Array ) { // if it's a class name array
+		if ( item.constructor === Set ) { // if it's a class name array
 			
 			currentRange.classNames = item;
 		
@@ -130,8 +130,8 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 		.map( ( item ) => {
 			if ( item.charAt( 0 ) === '.' ) {
 			
-				// turn ".class.lists" into ["class", "lists"]
-				return item.split( '.' ).slice( 1 );
+				// turn ".class.lists" into Set{ "class", "lists" }
+				return new Set( item.split( '.' ).slice( 1 ) );
 				
 			} else {
 			
@@ -152,9 +152,9 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 				accumulator.push( [], item );
 				
 			// if we have two class list arrays in a row, concat them
-			} else if ( item.constructor === Array &&
+			} else if ( item.constructor === Set &&
 			            accumulator[ accumulator.length - 1 ] &&
-			            accumulator[ accumulator.length - 1 ].constructor === Array ) {
+			            accumulator[ accumulator.length - 1 ].constructor === Set ) {
 				
 				accumulator[ accumulator.length - 1 ] =
 					accumulator[ accumulator.length - 1 ].concat( item );
@@ -172,10 +172,10 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 	// if --poofpoints starts ends with a classname,
 	// prepend implicit first 0, or append implicit last ∞
 	
-	if ( poofpointsArray[ 0 ].constructor === Array ) {
+	if ( poofpointsArray[ 0 ].constructor !== Number ) {
 		poofpointsArray.unshift( 0 );
 	}
-	if ( poofpointsArray[ poofpointsArray.length - 1 ].constructor === Array ) {
+	if ( poofpointsArray[ poofpointsArray.length - 1 ].constructor !== Number ) {
 		poofpointsArray.push( Infinity );
 	}
 	
