@@ -2,8 +2,11 @@
 // Poof! It's element queries!
 // (While I wait for Houdini.)
 // ((It's a poof of concept.))
+//
+// by Eric Portis
 
 ( function() {
+
 
 // prevent --poofpoints from cascading
 
@@ -77,74 +80,9 @@ const mo = new MutationObserver( ( mutations ) => {
 
 } );
 
-// takes a --poofpoints value string and returns a processed array
-
-const normalizePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
-
-	let poofpointsArray = poofpointsString
-		
-		// split on whitespace
-		.trim().split( /\s+/ )
-		
-		// normalize values
-		.map( ( item ) => {
-			if ( item.charAt( 0 ) === '.' ) {
-			
-				// turn ".class.lists" into ["class", "lists"]
-				return item.split( '.' ).slice( 1 );
-				
-			} else {
-			
-				// normalize lengths ("10em" → 160)
-				return getComputedLength( item, element );
-			
-			}
-		} );
-	
-	// deal with duplicates
-	
-	// TODO turn this into a .reduce()?
-	let deduped = [];
-	poofpointsArray.forEach( ( item ) => {
-		
-		// if we have two lengths in a row, stick a [] (null class) between them
-		if ( item.constructor === Number &&
-		     deduped[ deduped.length - 1 ] &&
-		     deduped[ deduped.length - 1 ].constructor === Number ) {
-			
-			deduped.push( [], item );
-		
-		// if we have two class list arrays in a row, concat them
-		} else if ( item.constructor === Array &&
-		            deduped[ deduped.length - 1 ] &&
-		            deduped[ deduped.length - 1 ].constructor === Array ) {
-			
-			deduped[ deduped.length - 1 ] = deduped[ deduped.length - 1 ].concat( item );
-			
-		} else {
-			
-			deduped.push( item );
-			
-		}
-		
-	} );
-	
-	// if --poofpoints starts ends with a classname,
-	// add implicit first 0 or last ∞
-	
-	if ( deduped[ 0 ].constructor === Array ) {
-		deduped.unshift( 0 );
-	}
-	if ( deduped[ deduped.length - 1 ].constructor === Array ) {
-		deduped.push( Infinity );
-	}
-
-	return deduped;
-
-}
 
 // takes a --poofpoints value and returns a .poofRanges object
-// which we attach to the element
+// (which we attach to the element)
 // e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
 //      → [
 //         { min: 0, max: 80, classNames: ['small', 'hide'] },
@@ -177,6 +115,73 @@ const parsePoofpoints = function( poofpointsString, element ) { // need the elem
 	
 };
 
+
+// takes a --poofpoints value string and returns a processed array
+// e.g., normalizePoofpoints( '.small.hide 80px 90px .medium 10em' )
+//       → [ 0, [ 'small', 'hide' ], 80, [], 90, [ 'medium' ], 160 ]
+const normalizePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
+
+	let poofpointsArray = poofpointsString
+		
+		// split on whitespace
+		.trim().split( /\s+/ )
+		
+		// normalize values
+		.map( ( item ) => {
+			if ( item.charAt( 0 ) === '.' ) {
+			
+				// turn ".class.lists" into ["class", "lists"]
+				return item.split( '.' ).slice( 1 );
+				
+			} else {
+			
+				// turn "10em" into 160
+				return getComputedLength( item, element );
+			
+			}
+		} )
+		
+		// handle repeated types
+		.reduce( ( accumulator, item ) => {
+			
+			// if we have two lengths in a row, stick a [] (null class) between them
+			if ( item.constructor === Number &&
+			     accumulator[ accumulator.length - 1 ] &&
+			     accumulator[ accumulator.length - 1 ].constructor === Number ) {
+				
+				accumulator.push( [], item );
+				
+			// if we have two class list arrays in a row, concat them
+			} else if ( item.constructor === Array &&
+			            accumulator[ accumulator.length - 1 ] &&
+			            accumulator[ accumulator.length - 1 ].constructor === Array ) {
+				
+				accumulator[ accumulator.length - 1 ] =
+					accumulator[ accumulator.length - 1 ].concat( item );
+				
+			} else {
+				
+				accumulator.push( item );
+				
+			}
+			
+			return accumulator;
+			
+		}, [] );
+	
+	// if --poofpoints starts ends with a classname,
+	// prepend implicit first 0, or append implicit last ∞
+	
+	if ( poofpointsArray[ 0 ].constructor === Array ) {
+		poofpointsArray.unshift( 0 );
+	}
+	if ( poofpointsArray[ poofpointsArray.length - 1 ].constructor === Array ) {
+		poofpointsArray.push( Infinity );
+	}
+	
+	return poofpointsArray;
+	
+}
 
 /**
  * Get the computed length in pixels of a CSS length value
