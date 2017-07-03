@@ -20,12 +20,12 @@ document.head.appendChild( sheet );
 
 const ro = new ResizeObserver( entries => {
 	
-	for ( let entry of entries ) {
+	for ( const entry of entries ) {
 	
 		let classesToAdd = new Set(),
 		    classesToRemove = new Set();
 	
-		for ( let range of entry.target.poofRanges ) {
+		for ( const range of entry.target.poofRanges ) {
 			
 			if ( entry.contentRect.width >= range.min &&
 			     entry.contentRect.width < range.max ) {
@@ -60,8 +60,8 @@ const ro = new ResizeObserver( entries => {
 
 const mo = new MutationObserver( ( mutations ) => {
 
-	for ( let mutation of mutations ) {
-		for ( let newNode of mutation.addedNodes ) {
+	for ( const mutation of mutations ) {
+		for ( const newNode of mutation.addedNodes ) {
 			if ( newNode.nodeType === 1 ) { // elements only, no text!
 			
 				let poofpointsValue = window.getComputedStyle( newNode )
@@ -90,14 +90,14 @@ const mo = new MutationObserver( ( mutations ) => {
 //         { min: 160, max: Infinity, classNames: Set{ 'large' } }
 //        ]
 
-const parsePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
+const parsePoofpoints = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
 
 	let poofpointsArray = normalizePoofpoints( poofpointsString, element );
 
 	let poofRanges   = [];
 	let currentRange = { min: poofpointsArray.shift() };
 
-	for ( item of poofpointsArray ) {
+	for ( const item of poofpointsArray ) {
 		if ( item.constructor === Set ) { // if it's a class name array
 			
 			currentRange.classNames = item;
@@ -113,13 +113,13 @@ const parsePoofpoints = function( poofpointsString, element ) { // need the elem
 	
 	return poofRanges;
 	
-};
+} );
 
 
 // takes a --poofpoints value string and returns a processed array
 // e.g., normalizePoofpoints( '.small.hide 80px 90px .medium 10em' )
 //       → [ 0, [ 'small', 'hide' ], 80, [], 90, [ 'medium' ], 160 ]
-const normalizePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
+const normalizePoofpoints = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
 
 	let poofpointsArray = poofpointsString
 		
@@ -181,7 +181,7 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 	
 	return poofpointsArray;
 	
-}
+} );
 
 /**
  * Get the computed length in pixels of a CSS length value
