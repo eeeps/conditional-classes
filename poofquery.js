@@ -8,29 +8,29 @@
 // prevent --breakpoints from cascading
 
 let sheet = document.createElement( 'style' );
-sheet.innerHTML = '* { --breakpoints: initial; }';
+sheet.innerHTML = '* { --poofpoints: initial; }';
 document.head.appendChild( sheet );
 
 
-// use the .breakpoints that we’ll store on each observed element’s DOM node
+// use the .poofpoints that we’ll store on each observed element’s DOM node
 // to check-and-possibly-toggle classes whenever the element is resized
 
 const ro = new ResizeObserver( entries => {
 	
 	for ( let entry of entries ) {
-		for ( let i = 0, l = entry.target.breakpoints.lengths.length; i < l; i++ ) {
+		for ( let i = 0, l = entry.target.poofpoints.lengths.length; i < l; i++ ) {
 			
-			if ( entry.contentRect.width >= entry.target.breakpoints.lengths[ i ] &&
-			     entry.contentRect.width < ( entry.target.breakpoints.lengths[ i + 1 ] || Infinity ) ) {
+			if ( entry.contentRect.width >= entry.target.poofpoints.lengths[ i ] &&
+			     entry.contentRect.width < ( entry.target.poofpoints.lengths[ i + 1 ] || Infinity ) ) {
 				
 				entry.target.classList.add( 
-					entry.target.breakpoints.names[ i ]
+					entry.target.poofpoints.names[ i ]
 				);
 				
 			} else {
 				
 				entry.target.classList.remove(
-					entry.target.breakpoints.names[ i ]
+					entry.target.poofpoints.names[ i ]
 				);
 				
 			}
@@ -50,12 +50,12 @@ const mo = new MutationObserver( ( mutations ) => {
 		for ( let newNode of mutation.addedNodes ) {
 			if ( newNode.nodeType === 1 ) { // elements only, no text!
 			
-				let breakpointsValue = window.getComputedStyle( newNode )
-					.getPropertyValue( '--breakpoints' );
+				let poofpointsValue = window.getComputedStyle( newNode )
+					.getPropertyValue( '--poofpoints' );
 				
-				if ( breakpointsValue !== '' ) {
+				if ( poofpointsValue !== '' ) {
 				
-					newNode.breakpoints = parseBreakpoints( breakpointsValue, newNode );
+					newNode.poofpoints = parsePoofpoints( poofpointsValue, newNode );
 					ro.observe( newNode );
 				
 				}
@@ -67,30 +67,30 @@ const mo = new MutationObserver( ( mutations ) => {
 } );
 
 
-// take a --breakpoints value and return a normalized object
+// take a --poofpoints value and return a normalized object
 // with an array of .names and an array of .lengths
-// e.g. parseBreakpoints('.small 80px .medium 10em .large', el)
+// e.g. parsePoofpoints('.small 80px .medium 10em .large', el)
 //      → { names:   [ 'small', 'medium', 'large' ],
 //          lengths: [ 0, 80, 160 ] }
 
-const parseBreakpoints = function( breakpointsString, element ) { // need the element to calculate ems based on context
+const parsePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
 
-	let breakpointsArray = breakpointsString
+	let poofpointsArray = poofpointsString
 		.trim().split( ' ' ).filter( ( item ) => item !== '' );
 	
 	// if breakPointsString starts with a name, prepend w/ a length of 0px
 	// this ensures that lengths are on the evens and that names[ i ] has a min-width of lengths[ i ]
-	if ( breakpointsArray[ 0 ].charAt( 0 ) === '.' ) {
-		breakpointsArray.unshift( '0px' );
+	if ( poofpointsArray[ 0 ].charAt( 0 ) === '.' ) {
+		poofpointsArray.unshift( '0px' );
 	}
 	
 	return {
 		
-		names: breakpointsArray
+		names: poofpointsArray
 			.filter( ( item, index ) => index % 2 !== 0 ) // odds
 			.map( ( item ) => item.replace( /^\./, '' ) ), // get rid of leading dots
 		
-		lengths: breakpointsArray
+		lengths: poofpointsArray
 			.filter( ( item, index ) => index % 2 === 0 ) // evens
 			.map( ( item ) => getComputedLength( item, element ) )
 		

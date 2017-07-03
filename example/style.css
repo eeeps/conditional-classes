@@ -5,7 +5,7 @@
  */
  
 .queried {
-	--breakpoints: 2em .medium 5em .large 8em .huge;
+	--poofpoints: 2em .medium 5em .large 8em .huge;
 	color: red;
 }
 
