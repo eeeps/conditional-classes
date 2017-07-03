@@ -77,6 +77,8 @@ const mo = new MutationObserver( ( mutations ) => {
 
 } );
 
+// takes a --poofpoints value string and returns a processed array
+
 const normalizePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
 
 	let poofpointsArray = poofpointsString
@@ -128,7 +130,7 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 	} );
 	
 	// if --poofpoints starts ends with a classname,
-	// add implicit first and last values
+	// add implicit first 0 or last ∞
 	
 	if ( deduped[ 0 ].constructor === Array ) {
 		deduped.unshift( 0 );
@@ -141,7 +143,7 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 
 }
 
-// takes a --poofpoints value and returns a .poofranges object
+// takes a --poofpoints value and returns a .poofRanges object
 // which we attach to the element
 // e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
 //      → [
