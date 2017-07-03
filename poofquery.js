@@ -5,44 +5,55 @@
 
 ( function() {
 
-// prevent --breakpoints from cascading
+// prevent --poofpoints from cascading
 
 let sheet = document.createElement( 'style' );
 sheet.innerHTML = '* { --poofpoints: initial; }';
 document.head.appendChild( sheet );
 
 
-// use the .poofpoints that we’ll store on each observed element’s DOM node
+// use the .poofRanges that we’ll store on each observed element’s DOM node
 // to check-and-possibly-toggle classes whenever the element is resized
 
 const ro = new ResizeObserver( entries => {
 	
 	for ( let entry of entries ) {
-		for ( let i = 0, l = entry.target.poofpoints.lengths.length; i < l; i++ ) {
+	
+		let classesToAdd = new Set(),
+		    classesToRemove = new Set();
+	
+		for ( let range of entry.target.poofRanges ) {
 			
-			if ( entry.contentRect.width >= entry.target.poofpoints.lengths[ i ] &&
-			     entry.contentRect.width < ( entry.target.poofpoints.lengths[ i + 1 ] || Infinity ) ) {
-				
-				entry.target.classList.add( 
-					entry.target.poofpoints.names[ i ]
-				);
-				
+			if ( entry.contentRect.width >= range.min &&
+			     entry.contentRect.width < range.max ) {
+			
+				classesToAdd = new Set( [ ...classesToAdd, ...range.classNames ] );
+			
 			} else {
-				
-				entry.target.classList.remove(
-					entry.target.poofpoints.names[ i ]
-				);
-				
+			
+				classesToRemove = new Set( [ ...classesToRemove, ...range.classNames ] );
+			
 			}
-		
+			
 		}
+		
+		// when a class name appears in both ranges that apply, *and* in ranges that don’t
+		// don't remove it
+		classesToRemove = new Set(
+			[ ...classesToRemove ]
+			.filter( ( x ) => !classesToAdd.has( x ) ) 
+		);
+		
+		entry.target.classList.remove( ...classesToRemove );
+		entry.target.classList.add( ...classesToAdd );
+	
 	}
 
 } );
 
 
-// as elements come into the DOM, check to see if they have --breakpoints
-// if they do, store .breakpoints on their DOM node and start resizeObserving them
+// as elements come into the DOM, check to see if they have --poofpoints
+// if they do, store .poofRanges on their DOM node and start resizeObserving them
 
 const mo = new MutationObserver( ( mutations ) => {
 
@@ -55,7 +66,7 @@ const mo = new MutationObserver( ( mutations ) => {
 				
 				if ( poofpointsValue !== '' ) {
 				
-					newNode.poofpoints = parsePoofpoints( poofpointsValue, newNode );
+					newNode.poofRanges = parsePoofpoints( poofpointsValue, newNode );
 					ro.observe( newNode );
 				
 				}
@@ -66,35 +77,101 @@ const mo = new MutationObserver( ( mutations ) => {
 
 } );
 
+const normalizePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
 
-// take a --poofpoints value and return a normalized object
-// with an array of .names and an array of .lengths
-// e.g. parsePoofpoints('.small 80px .medium 10em .large', el)
-//      → { names:   [ 'small', 'medium', 'large' ],
-//          lengths: [ 0, 80, 160 ] }
+	let poofpointsArray = poofpointsString
+		
+		// split on whitespace
+		.trim().split( ' ' ).filter( ( item ) => item !== '' )
+		
+		// normalize values
+		.map( ( item ) => {
+			if ( item.charAt( 0 ) === '.' ) {
+			
+				// turn ".class.lists" into ["class", "lists"]
+				return item.split( '.' ).slice( 1 );
+				
+			} else {
+			
+				// normalize lengths ("10em" → 160)
+				return getComputedLength( item, element );
+			
+			}
+		} );
+	
+	// deal with duplicates
+	
+	// TODO turn this into a .reduce()?
+	let deduped = [];
+	poofpointsArray.forEach( ( item ) => {
+		
+		// if we have two lengths in a row, stick a [] (null class) between them
+		if ( item.constructor === Number &&
+		     deduped[ deduped.length - 1 ] &&
+		     deduped[ deduped.length - 1 ].constructor === Number ) {
+			
+			deduped.push( [], item );
+		
+		// if we have two class list arrays in a row, concat them
+		} else if ( item.constructor === Array &&
+		            deduped[ deduped.length - 1 ] &&
+		            deduped[ deduped.length - 1 ].constructor === Array ) {
+			
+			deduped[ deduped.length - 1 ] = deduped[ deduped.length - 1 ].concat( item );
+			
+		} else {
+			
+			deduped.push( item );
+			
+		}
+		
+	} );
+	
+	// if --poofpoints starts ends with a classname,
+	// add implicit first and last values
+	
+	if ( deduped[ 0 ].constructor === Array ) {
+		deduped.unshift( 0 );
+	}
+	if ( deduped[ deduped.length - 1 ].constructor === Array ) {
+		deduped.push( Infinity );
+	}
+
+	return deduped;
+
+}
+
+// takes a --poofpoints value and returns a .poofranges object
+// which we attach to the element
+// e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
+//      → [
+//         { min: 0, max: 80, classNames: ['small', 'hide'] },
+//         { min: 80, max: 160, classNames: ['medium'] },
+//         { min: 160, max: Infinity, classNames: ['large'] }
+//        ]
 
 const parsePoofpoints = function( poofpointsString, element ) { // need the element to calculate ems based on context
 
-	let poofpointsArray = poofpointsString
-		.trim().split( ' ' ).filter( ( item ) => item !== '' );
-	
-	// if breakPointsString starts with a name, prepend w/ a length of 0px
-	// this ensures that lengths are on the evens and that names[ i ] has a min-width of lengths[ i ]
-	if ( poofpointsArray[ 0 ].charAt( 0 ) === '.' ) {
-		poofpointsArray.unshift( '0px' );
+	let poofpointsArray = normalizePoofpoints( poofpointsString, element );
+
+	let poofRanges   = [];
+	let currentRange = { min: poofpointsArray.shift() };
+
+	for ( item of poofpointsArray ) {
+		if ( item.constructor === Array ) { // if it's a class name array
+			
+			currentRange.classNames = item;
+		
+		} else {
+		
+			currentRange.max = item;
+			poofRanges.push( currentRange );
+			currentRange = { min: item };
+			
+		}
 	}
 	
-	return {
-		
-		names: poofpointsArray
-			.filter( ( item, index ) => index % 2 !== 0 ) // odds
-			.map( ( item ) => item.replace( /^\./, '' ) ), // get rid of leading dots
-		
-		lengths: poofpointsArray
-			.filter( ( item, index ) => index % 2 === 0 ) // evens
-			.map( ( item ) => getComputedLength( item, element ) )
-		
-	};
+	return poofRanges;
 	
 };
 
