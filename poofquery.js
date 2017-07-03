@@ -15,46 +15,6 @@ sheet.innerHTML = '* { --poofpoints: initial; }';
 document.head.appendChild( sheet );
 
 
-// use the .poofRanges that we’ll store on each observed element’s DOM node
-// to check-and-possibly-toggle classes whenever the element is resized
-
-const ro = new ResizeObserver( entries => {
-	
-	for ( const entry of entries ) {
-	
-		let classesToAdd = new Set(),
-		    classesToRemove = new Set();
-	
-		for ( const range of entry.target.poofRanges ) {
-			
-			if ( entry.contentRect.width >= range.min &&
-			     entry.contentRect.width < range.max ) {
-			
-				classesToAdd = new Set( [ ...classesToAdd, ...range.classNames ] );
-			
-			} else {
-			
-				classesToRemove = new Set( [ ...classesToRemove, ...range.classNames ] );
-			
-			}
-			
-		}
-		
-		// when a class name appears in both ranges that apply, *and* in ranges that don’t
-		// true queries win aka don't remove it
-		classesToRemove = new Set(
-			[ ...classesToRemove ]
-			.filter( ( x ) => !classesToAdd.has( x ) ) 
-		);
-		
-		entry.target.classList.remove( ...classesToRemove );
-		entry.target.classList.add( ...classesToAdd );
-	
-	}
-
-} );
-
-
 // as elements come into the DOM, check to see if they have --poofpoints
 // if they do, store .poofRanges on their DOM node and start resizeObserving them
 
@@ -76,6 +36,49 @@ const mo = new MutationObserver( ( mutations ) => {
 				
 			}
 		}
+	}
+
+} );
+
+
+// use the .poofRanges that we’ll store on each observed element’s DOM node
+// to check-and-possibly-toggle classes whenever the element is resized
+
+const ro = new ResizeObserver( entries => {
+	
+	for ( const entry of entries ) {
+		
+		let classes = entry.target.poofRanges.reduce( ( classes, range ) => {
+			
+			if ( entry.contentRect.width >= range.min &&
+			     entry.contentRect.width < range.max ) {
+			
+				classes.toAdd = new Set( [ ...classes.toAdd, ...range.classNames ] );
+			
+			} else {
+			
+				classes.toRemove = new Set( [ ...classes.toRemove, ...range.classNames ] );
+			
+			}
+			
+			return classes
+			
+		}, { 
+			toAdd: new Set(),
+			toRemove: new Set()
+		} );
+		
+		// class names can appear in both ranges that apply, *and* in ranges that don’t
+		// true queries win vs false queries; don't remove these class names
+		classes.toRemove = new Set(
+			[ ...classes.toRemove ].filter( ( x ) => { 
+				return !( classes.toAdd.has( x ) );
+			} )
+		);
+		
+		entry.target.classList.remove( ...classes.toRemove );
+		entry.target.classList.add( ...classes.toAdd );
+	
 	}
 
 } );
@@ -130,12 +133,12 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 		.map( ( item ) => {
 			if ( item.charAt( 0 ) === '.' ) {
 			
-				// turn ".class.lists" into Set{ "class", "lists" }
+				// e.g. ".class.lists" → Set{ "class", "lists" }
 				return new Set( item.split( '.' ).slice( 1 ) );
 				
 			} else {
 			
-				// turn "10em" into 160
+				// e.g. "10em" → 160
 				return getComputedLength( item, element );
 			
 			}
