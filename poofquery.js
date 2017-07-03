@@ -38,7 +38,7 @@ const ro = new ResizeObserver( entries => {
 		}
 		
 		// when a class name appears in both ranges that apply, *and* in ranges that don’t
-		// don't remove it
+		// true queries win aka don't remove it
 		classesToRemove = new Set(
 			[ ...classesToRemove ]
 			.filter( ( x ) => !classesToAdd.has( x ) ) 
@@ -82,7 +82,7 @@ const normalizePoofpoints = function( poofpointsString, element ) { // need the 
 	let poofpointsArray = poofpointsString
 		
 		// split on whitespace
-		.trim().split( ' ' ).filter( ( item ) => item !== '' )
+		.trim().split( /\s+/ )
 		
 		// normalize values
 		.map( ( item ) => {
