@@ -61,7 +61,7 @@ const ro = new ResizeObserver( entries => {
 			
 			}
 			
-			return classes
+			return classes;
 			
 		}, { 
 			toAdd: new Set(),
@@ -97,7 +97,7 @@ const parsePoofpoints = ( function( poofpointsString, element ) { // need the el
 
 	let poofpointsArray = normalizePoofpoints( poofpointsString, element );
 
-	let poofRanges   = [];
+	let poofRanges = [];
 	let currentRange = { min: poofpointsArray.shift() };
 
 	for ( const item of poofpointsArray ) {
@@ -105,7 +105,7 @@ const parsePoofpoints = ( function( poofpointsString, element ) { // need the el
 			
 			currentRange.classNames = item;
 		
-		} else {
+		} else { // if item.constructor === Number // if it's a length
 		
 			currentRange.max = item;
 			poofRanges.push( currentRange );
@@ -160,7 +160,7 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 			            accumulator[ accumulator.length - 1 ].constructor === Set ) {
 				
 				accumulator[ accumulator.length - 1 ] =
-					accumulator[ accumulator.length - 1 ].concat( item );
+					new Set( [ ...accumulator[ accumulator.length - 1 ], ...item ] );
 				
 			} else {
 				

@@ -5,7 +5,11 @@
  */
  
 .queried {
-	--poofpoints: .small 2em .medium.border 5em .large.border 8em .huge;
+	--poofpoints:
+		.small
+		2em .medium.border
+		5em .large .border
+		8em .huge;
 	color: red;
 }
 
