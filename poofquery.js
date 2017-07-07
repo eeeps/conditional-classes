@@ -3,6 +3,7 @@
 // (While I wait for Houdini.)
 // ((It's a poof of concept.))
 //
+// v 0.1, 2017-07-04
 // by Eric Portis
 
 ( function() {
@@ -30,6 +31,7 @@ const mo = new MutationObserver( ( mutations ) => {
 				if ( poofpointsValue !== '' ) {
 				
 					newNode.poofRanges = parsePoofpoints( poofpointsValue, newNode );
+					newNode.computedStyle = window.getComputedStyle( newNode );
 					ro.observe( newNode );
 				
 				}
@@ -48,10 +50,19 @@ const ro = new ResizeObserver( entries => {
 	
 	for ( const entry of entries ) {
 		
+		let boundingWidth = entry.contentRect.width;
+		if ( entry.target.computedStyle.boxSizing === 'border-box' ) {
+			boundingWidth +=
+				  parseFloat( entry.target.computedStyle.paddingLeft  )
+				+ parseFloat( entry.target.computedStyle.paddingRight )
+				+ parseFloat( entry.target.computedStyle.borderLeft   )
+				+ parseFloat( entry.target.computedStyle.borderRight  );
+		}
+		
 		let classes = entry.target.poofRanges.reduce( ( classes, range ) => {
 			
-			if ( entry.contentRect.width >= range.min &&
-			     entry.contentRect.width < range.max ) {
+			if ( boundingWidth >= range.min &&
+			     boundingWidth <  range.max ) {
 			
 				classes.toAdd = new Set( [ ...classes.toAdd, ...range.classNames ] );
 			
@@ -105,7 +116,7 @@ const parsePoofpoints = ( function( poofpointsString, element ) { // need the el
 			
 			currentRange.classNames = item;
 		
-		} else { // if item.constructor === Number // if it's a length
+		} else /* if ( item.constructor === Number ) */ { // if it's a length
 		
 			currentRange.max = item;
 			poofRanges.push( currentRange );
@@ -154,7 +165,7 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 				
 				accumulator.push( [], item );
 				
-			// if we have two class list arrays in a row, concat them
+			// if we have two class lists in a row, concat them
 			} else if ( item.constructor === Set &&
 			            accumulator[ accumulator.length - 1 ] &&
 			            accumulator[ accumulator.length - 1 ].constructor === Set ) {
