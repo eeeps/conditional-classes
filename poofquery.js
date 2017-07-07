@@ -64,11 +64,11 @@ const ro = new ResizeObserver( entries => {
 			if ( boundingWidth >= range.min &&
 			     boundingWidth <  range.max ) {
 			
-				classes.toAdd = new Set( [ ...classes.toAdd, ...range.classNames ] );
+				classes.toAdd = classes.toAdd.union( range.classNames );
 			
 			} else {
 			
-				classes.toRemove = new Set( [ ...classes.toRemove, ...range.classNames ] );
+				classes.toRemove = classes.toRemove.union( range.classNames );
 			
 			}
 			
@@ -80,12 +80,7 @@ const ro = new ResizeObserver( entries => {
 		} );
 		
 		// class names can appear in both ranges that apply, *and* in ranges that don’t
-		// true queries win vs false queries; don't remove these class names
-		classes.toRemove = new Set(
-			[ ...classes.toRemove ].filter( ( x ) => { 
-				return !( classes.toAdd.has( x ) );
-			} )
-		);
+		classes.toRemove = classes.toRemove.difference( classes.toAdd );
 		
 		entry.target.classList.remove( ...classes.toRemove );
 		entry.target.classList.add( ...classes.toAdd );
@@ -93,6 +88,26 @@ const ro = new ResizeObserver( entries => {
 	}
 
 } );
+
+
+// basic set operations
+// from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+
+Set.prototype.union = function( setB ) {
+	let union = new Set( this );
+	for ( const elem of setB ) {
+		union.add(elem);
+	}
+	return union;
+}
+
+Set.prototype.difference = function( setB ) {
+	let difference = new Set( this );
+	for ( const elem of setB ) {
+		difference.delete( elem );
+	}
+	return difference;
+}
 
 
 // takes a --poofpoints value and returns a .poofRanges object
@@ -197,6 +212,7 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 	
 } );
 
+
 /**
  * Get the computed length in pixels of a CSS length value
 // e.g. getComputedLength( '10em', el ) → 160
@@ -258,5 +274,6 @@ function getComputedLength(value, element) {
 
 // start MutationObserving the document
 mo.observe( document, { childList: true, subtree: true } );
+
 
 } )();
