@@ -30,7 +30,7 @@ const mo = new MutationObserver( ( mutations ) => {
 				
 				if ( poofpointsValue !== '' ) {
 				
-					newNode.computedStyle = computedStyle; // need to check/account for `box-sizing: border-box`-effected-widths, later
+					newNode.computedStyle = computedStyle; // need to check/account for `box-sizing: border-box`-affected-widths, later
 					newNode.poofRanges = parsePoofpoints( poofpointsValue, newNode );
 					ro.observe( newNode );
 				
@@ -173,20 +173,19 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 		// handle repeated types
 		.reduce( ( accumulator, item ) => {
 			
-			// if we have two lengths in a row, stick a [] (null class) between them
+			// if we have two lengths in a row, stick an empty Set between them
 			if ( item.constructor === Number &&
 			     accumulator[ accumulator.length - 1 ] &&
 			     accumulator[ accumulator.length - 1 ].constructor === Number ) {
 				
-				accumulator.push( [], item );
+				accumulator.push( new Set(), item );
 				
-			// if we have two class lists in a row, concat them
+			// if we have two class lists in a row, combine them
 			} else if ( item.constructor === Set &&
 			            accumulator[ accumulator.length - 1 ] &&
 			            accumulator[ accumulator.length - 1 ].constructor === Set ) {
 				
-				accumulator[ accumulator.length - 1 ] =
-					new Set( [ ...accumulator[ accumulator.length - 1 ], ...item ] );
+				accumulator[ accumulator.length - 1 ] = accumulator[ accumulator.length - 1 ].union( item );
 				
 			} else {
 				
