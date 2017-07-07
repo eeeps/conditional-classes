@@ -25,13 +25,13 @@ const mo = new MutationObserver( ( mutations ) => {
 		for ( const newNode of mutation.addedNodes ) {
 			if ( newNode.nodeType === 1 ) { // elements only, no text!
 			
-				let poofpointsValue = window.getComputedStyle( newNode )
-					.getPropertyValue( '--poofpoints' );
+				let computedStyle = window.getComputedStyle( newNode );
+				let poofpointsValue = computedStyle.getPropertyValue( '--poofpoints' );
 				
 				if ( poofpointsValue !== '' ) {
 				
+					newNode.computedStyle = computedStyle; // need to check/account for `box-sizing: border-box`-effected-widths, later
 					newNode.poofRanges = parsePoofpoints( poofpointsValue, newNode );
-					newNode.computedStyle = window.getComputedStyle( newNode );
 					ro.observe( newNode );
 				
 				}
