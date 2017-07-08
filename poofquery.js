@@ -90,27 +90,7 @@ const ro = new ResizeObserver( entries => {
 } );
 
 
-// basic set operations
-// from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
-
-Set.prototype.union = function( setB ) {
-	let union = new Set( this );
-	for ( const elem of setB ) {
-		union.add(elem);
-	}
-	return union;
-}
-
-Set.prototype.difference = function( setB ) {
-	let difference = new Set( this );
-	for ( const elem of setB ) {
-		difference.delete( elem );
-	}
-	return difference;
-}
-
-
-// takes a --poofpoints value and returns a .poofRanges object
+// takes a raw --poofpoints value and returns a poofranges array
 // (which we attach to the element)
 // e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
 //      → [
@@ -121,41 +101,24 @@ Set.prototype.difference = function( setB ) {
 
 const parsePoofpoints = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
 
-	let poofpointsArray = normalizePoofpoints( poofpointsString, element );
+	return poofrangesFromPooflist( 
+		pooflistFromString( poofpointsString, element )
+	);
 
-	let poofRanges = [];
-	let currentRange = { min: poofpointsArray.shift() };
-
-	for ( const item of poofpointsArray ) {
-		if ( item.constructor === Set ) { // if it's a class name array
-			
-			currentRange.classNames = item;
-		
-		} else /* if ( item.constructor === Number ) */ { // if it's a length
-		
-			currentRange.max = item;
-			poofRanges.push( currentRange );
-			currentRange = { min: item };
-			
-		}
-	}
-	
-	return poofRanges;
-	
 } );
 
 
-// takes a --poofpoints value string and returns a processed array
-// e.g., normalizePoofpoints( '.small.hide 80px 90px .medium 10em' )
-//       → [ 0, [ 'small', 'hide' ], 80, [], 90, [ 'medium' ], 160 ]
-const normalizePoofpoints = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
+// takes a --poofpoints value string and returns a nice, pre-processed array
+// e.g., pooflistFromString( '.small.hide 80px 90px .medium 10em' )
+//       → [ 0, Set { 'small', 'hide' }, 80, Set {}, 90, Set { 'medium' }, 160 ]
+const pooflistFromString = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
 
-	let poofpointsArray = poofpointsString
+	let pooflist = poofpointsString
 		
 		// split on whitespace
 		.trim().split( /\s+/ )
 		
-		// normalize values
+		// compute typed values
 		.map( ( item ) => {
 			if ( item.charAt( 0 ) === '.' ) {
 			
@@ -197,18 +160,49 @@ const normalizePoofpoints = ( function( poofpointsString, element ) { // need th
 			
 		}, [] );
 	
-	// if --poofpoints starts ends with a classname,
-	// prepend implicit first 0, or append implicit last ∞
+	// bookend with lengths
 	
-	if ( poofpointsArray[ 0 ].constructor !== Number ) {
-		poofpointsArray.unshift( 0 );
+	if ( pooflist[ 0 ].constructor !== Number ) {
+		pooflist.unshift( 0 );
 	}
-	if ( poofpointsArray[ poofpointsArray.length - 1 ].constructor !== Number ) {
-		poofpointsArray.push( Infinity );
+	if ( pooflist[ pooflist.length - 1 ].constructor !== Number ) {
+		pooflist.push( Infinity );
 	}
 	
-	return poofpointsArray;
+	return pooflist;
 	
+} );
+
+
+// takes a pre-processed pooflist array and returns an array of poofranges
+// e.g., poofrangesFromPooflist( 0, [ Set { 'small', 'hide' }, 80, Set { 'medium' }, 160, Set { 'large' }, Infinity ] )
+//      → [
+//         { min: 0, max: 80, classNames: Set{ 'small', 'hide' } },
+//         { min: 80, max: 160, classNames: Set{ 'medium' } },
+//         { min: 160, max: Infinity, classNames: Set{ 'large' } }
+//        ]
+
+const poofrangesFromPooflist = ( function( pooflistArray ) {
+
+	let poofRanges = [];
+	let currentRange = { min: pooflistArray.shift() };
+
+	for ( const item of pooflistArray ) {
+		if ( item.constructor === Set ) { // if it's a class name array
+			
+			currentRange.classNames = item;
+		
+		} else /* if ( item.constructor === Number ) */ { // if it's a length
+		
+			currentRange.max = item;
+			poofRanges.push( currentRange );
+			currentRange = { min: item };
+			
+		}
+	}
+	
+	return poofRanges;
+
 } );
 
 
@@ -268,6 +262,26 @@ function getComputedLength(value, element) {
 		value /= 2;
 	}
 	return parseFloat(getComputedStyle(element).fontSize) * value;
+}
+
+
+// 🐒patch’d basic set operations
+// from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+
+Set.prototype.union = function( setB ) {
+	let union = new Set( this );
+	for ( const elem of setB ) {
+		union.add(elem);
+	}
+	return union;
+}
+
+Set.prototype.difference = function( setB ) {
+	let difference = new Set( this );
+	for ( const elem of setB ) {
+		difference.delete( elem );
+	}
+	return difference;
 }
 
 
