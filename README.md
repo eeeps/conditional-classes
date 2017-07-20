@@ -24,7 +24,7 @@ Then use it like this:
 
 ```css
 .container {
-	---poofpoints: 10em .medium 20em .large;
+	--poofpoints: 10em .medium 20em .large;
 }
 
 .container.medium .element { /* equivalent to .element:container( 10em <= width < 20em ) */
