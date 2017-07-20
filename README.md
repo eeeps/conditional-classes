@@ -27,11 +27,11 @@ Then use it like this:
 	--poofpoints: 10em .medium 20em .large;
 }
 
-.container.medium .element { /* equivalent to .element:container( 10em <= width < 20em ) */
+.container.medium .element { /* applies when .container’s width is between 10em and 20em */
 	/* do container query stuff */
 }
 
-.container.large .element { /* equivalent to .element:container( width >= 20em ) */
+.container.large .element { /* applies when .container’s width is >= 20em  */
 	/* do some other container query stuff */
 }
 ```
