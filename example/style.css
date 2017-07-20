@@ -1,6 +1,6 @@
-/* ✨ Element queries ✨
- *    Via a --breakpoints custom property with alternating names and lengths, e.g.
- *    	--breakpoints: .small 5em .medium 10em .large;
+/* ✨ Element/container queries ✨
+ *    Via a --poofpoints custom property with alternating class names and lengths, e.g.
+ *    	--poofpoints: .small 5em .medium 10em .large;
  *    Class names are applied when an element’s width is between adjacent lengths.
  */
  
