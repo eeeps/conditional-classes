@@ -3,7 +3,8 @@ It's a poof of concept.
 
 I made this to experiment with and learn about container queries. If you want to use container queries in production, you should probably be using [something](https://github.com/eqcss/eqcss) [else](https://github.com/ausi/cq-prolyfill).
 
-## Requirements
+## Requirements   
+
 
 `poofquery.js` requires [ResizeObserver](https://github.com/WICG/ResizeObserver), which is currently only implemented behind a flag in Chrome. Luckily, there’s an excellent [polyfill](https://github.com/que-etc/resize-observer-polyfill).
 
@@ -30,7 +31,7 @@ Then use it like this:
 	/* do container query stuff */
 }
 
-.container.large .element { /* equivalent to .element:container( width > 20em ) */
+.container.large .element { /* equivalent to .element:container( width >= 20em ) */
 	/* do some other container query stuff */
 }
 ```
