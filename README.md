@@ -1,5 +1,5 @@
 # presto-points
-*Presto change-o,* it’s element queries.
+*Presto change-o,* it’s element/container queries.
 
 I made this to experiment with and learn about container queries. If you want to use container queries in production, you should probably be using [something](https://github.com/eqcss/eqcss) [else](https://github.com/ausi/cq-prolyfill).
 
