@@ -1,11 +1,11 @@
 /* ✨ Element/container queries ✨
- *    Via a --poofpoints custom property with alternating class names and lengths, e.g.
- *    	--poofpoints: .small 5em .medium 10em .large;
+ *    Via a --presto-points custom property with alternating class names and lengths, e.g.
+ *    	--presto-points: .small 5em .medium 10em .large;
  *    Class names are applied when an element’s width is between adjacent lengths.
  */
  
 .queried {
-	--poofpoints:
+	--presto-points:
 		.small
 		2em .medium.border
 		5em .large .border

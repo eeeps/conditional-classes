@@ -1,9 +1,9 @@
---poofheights: 30em .big
---poofwidths: 20px .small 10em .medium
+--presto-heights: 30em .big
+--presto-widths: 20px .small 10em .medium
 
 /* vs */
 
---poofpoints: (min-width) 30em .big 40em .huge
+--presto-points: (min-width) 30em .big 40em .huge
               (min-height) 10em .small;
 
---poofpoints: (min-aspect-ratio) 16/9 small;
+--presto-points: (min-aspect-ratio) 16/9 small;

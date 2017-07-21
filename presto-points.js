@@ -1,9 +1,8 @@
-// poofquery.js
-// Poof! It's element queries!
+// presto-points.js
+// Presto change-o, its element queries!
 // (While I wait for Houdini.)
-// ((It's a poof of concept.))
 //
-// v 0.1, 2017-07-04
+// v 0.1.1, 2017-07-21
 // by Eric Portis
 
 ( function() {
@@ -14,15 +13,15 @@
 if ( !( 'Set' in window ) ) { return; }
 
 
-// prevent --poofpoints from cascading
+// prevent --presto-points from cascading
 
 let sheet = document.createElement( 'style' );
-sheet.innerHTML = '* { --poofpoints: initial; }';
+sheet.innerHTML = '* { --presto-points: initial; }';
 document.head.appendChild( sheet );
 
 
-// as elements come into the DOM, check to see if they have --poofpoints
-// if they do, store .poofranges on their DOM node and start resizeObserving them
+// as elements come into the DOM, check to see if they have --presto-points
+// if they do, store .prestoRanges on their DOM node and start resizeObserving them
 
 const mo = new MutationObserver( ( mutations ) => {
 
@@ -31,12 +30,12 @@ const mo = new MutationObserver( ( mutations ) => {
 			if ( newNode.nodeType === 1 ) { // elements only, no text!
 			
 				const computedStyle = window.getComputedStyle( newNode ),
-				      poofpoints = computedStyle.getPropertyValue( '--poofpoints' );
+				      prestoPoints = computedStyle.getPropertyValue( '--presto-points' );
 				
-				if ( poofpoints !== '' ) {
+				if ( prestoPoints !== '' ) {
 				
 					newNode.computedStyle = computedStyle; // need to check/account for `box-sizing: border-box`-affected-widths, later
-					newNode.poofranges = parsePoofpoints( poofpoints, newNode );
+					newNode.prestoRanges = parsePrestoPoints( prestoPoints, newNode );
 					ro.observe( newNode );
 				
 				}
@@ -48,7 +47,7 @@ const mo = new MutationObserver( ( mutations ) => {
 } );
 
 
-// use the .poofranges that we’ll store on each observed element’s DOM node
+// use the .prestoRanges that we’ll store on each observed element’s DOM node
 // to check-and-possibly-toggle classes whenever the element is resized
 
 const ro = new ResizeObserver( entries => {
@@ -64,7 +63,7 @@ const ro = new ResizeObserver( entries => {
 				+ parseFloat( entry.target.computedStyle.borderRight  );
 		}
 		
-		let classes = entry.target.poofranges.reduce( ( classes, range ) => {
+		let classes = entry.target.prestoRanges.reduce( ( classes, range ) => {
 			
 			if ( boundingWidth >= range.min &&
 			     boundingWidth <  range.max ) {
@@ -95,33 +94,33 @@ const ro = new ResizeObserver( entries => {
 } );
 
 
-// takes a raw --poofpoints value and returns a poofranges array
+// takes a raw --presto-points value and returns a prestoRanges array
 // (which we attach to the element)
 //
-// e.g. parsePoofpoints('.small.hide 80px .medium 10em .large', el)
+// e.g. parsePrestoPoints('.small.hide 80px .medium 10em .large', el)
 //      → [
 //         { min: 0, max: 80, classNames: Set{ 'small', 'hide' } },
 //         { min: 80, max: 160, classNames: Set{ 'medium' } },
 //         { min: 160, max: Infinity, classNames: Set{ 'large' } }
 //        ]
 
-const parsePoofpoints = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
+const parsePrestoPoints = ( function( prestoPointsString, element ) { // need the element to calculate ems based on context
 
-	return poofrangesFromPooflist( 
-		pooflistFromString( poofpointsString, element )
+	return prestoRangesFromPrestoList( 
+		prestoListFromString( prestoPointsString, element )
 	);
 
 } );
 
 
-// takes a --poofpoints value string and returns a nice, pre-processed array
+// takes a --presto-points value string and returns a nice, pre-processed array
 //
-// e.g., pooflistFromString( '.small.hide 80px 90px .medium 10em' )
+// e.g., prestoListFromString( '.small.hide 80px 90px .medium 10em' )
 //       → [ 0, Set { 'small', 'hide' }, 80, Set {}, 90, Set { 'medium' }, 160 ]
 
-const pooflistFromString = ( function( poofpointsString, element ) { // need the element to calculate ems based on context
+const prestoListFromString = ( function( prestoPointsString, element ) { // need the element to calculate ems based on context
 
-	let pooflist = poofpointsString
+	let prestoList = prestoPointsString
 		
 		// split on whitespace
 		.trim().split( /\s+/ )
@@ -170,33 +169,33 @@ const pooflistFromString = ( function( poofpointsString, element ) { // need the
 	
 	// bookend with lengths
 	
-	if ( pooflist[ 0 ].constructor !== Number ) {
-		pooflist.unshift( 0 );
+	if ( prestoList[ 0 ].constructor !== Number ) {
+		prestoList.unshift( 0 );
 	}
-	if ( pooflist[ pooflist.length - 1 ].constructor !== Number ) {
-		pooflist.push( Infinity );
+	if ( prestoList[ prestoList.length - 1 ].constructor !== Number ) {
+		prestoList.push( Infinity );
 	}
 	
-	return pooflist;
+	return prestoList;
 	
 } );
 
 
-// takes a pre-processed pooflist array and returns an array of poofranges
+// takes a pre-processed prestoList array and returns an array of prestoRanges
 //
-// e.g., poofrangesFromPooflist( [ 0, Set { 'small', 'hide' }, 80, Set { 'medium' }, 160, Set { 'large' }, Infinity ] )
+// e.g., prestoRangesFromPrestoList( [ 0, Set { 'small', 'hide' }, 80, Set { 'medium' }, 160, Set { 'large' }, Infinity ] )
 //       → [
 //          { min: 0, max: 80, classNames: Set{ 'small', 'hide' } },
 //          { min: 80, max: 160, classNames: Set{ 'medium' } },
 //          { min: 160, max: Infinity, classNames: Set{ 'large' } }
 //         ]
 
-const poofrangesFromPooflist = ( function( pooflistArray ) {
+const prestoRangesFromPrestoList = ( function( prestoListArray ) {
 
-	let poofranges = [];
-	let currentRange = { min: pooflistArray.shift() };
+	let prestoRanges = [];
+	let currentRange = { min: prestoListArray.shift() };
 
-	for ( const item of pooflistArray ) {
+	for ( const item of prestoListArray ) {
 		if ( item.constructor === Set ) { // if it's a class name array
 			
 			currentRange.classNames = item;
@@ -204,13 +203,13 @@ const poofrangesFromPooflist = ( function( pooflistArray ) {
 		} else /* if ( item.constructor === Number ) */ { // if it's a length
 		
 			currentRange.max = item;
-			poofranges.push( currentRange );
+			prestoRanges.push( currentRange );
 			currentRange = { min: item };
 			
 		}
 	}
 	
-	return poofranges;
+	return prestoRanges;
 
 } );
 
