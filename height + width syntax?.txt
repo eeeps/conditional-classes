@@ -7,3 +7,15 @@
               (min-height) 10em .small;
 
 --presto-points: (min-aspect-ratio) 16/9 small;
+
+/* Or... why not use full-on query syntax? */
+
+.container {
+	--if: (width < 20em)         .narrow,
+	      (20em >= width > 60em) .normal,
+	      (width >= 60em)        .wide,
+	      
+	      (height < 10em) .short,
+	      
+	      (aspect-ratio < 1/1) .portrait;
+}
