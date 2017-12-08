@@ -18,9 +18,12 @@ let sheet = document.createElement( 'style' );
 sheet.innerHTML = '* { --presto-points: initial; }';
 document.head.appendChild( sheet );
 
+
 // data we're storing about DOM nodes
+
 const prestoRanges = new WeakMap();
-const computedStyles = new WeakMap();
+const cachedComputedStyles = new WeakMap(); // https://jsperf.com/cost-of-getcomputedstyle
+
 
 // as elements come into the DOM, check to see if they have --presto-points
 // if they do, store their prestoRanges and start resizeObserving them
@@ -36,7 +39,7 @@ const mo = new MutationObserver( ( mutations ) => {
 				
 				if ( prestoPoints !== '' ) {
 				
-					computedStyles.set( newNode, computedStyle ); // need to check/account for `box-sizing: border-box`-affected-widths, later
+					cachedComputedStyles.set( newNode, computedStyle ); // need to check/account for `box-sizing: border-box`-affected-widths, later
 					prestoRanges.set( newNode, parsePrestoPoints( prestoPoints, newNode ) );
 					ro.observe( newNode );
 				
@@ -55,13 +58,15 @@ const ro = new ResizeObserver( entries => {
 	
 	for ( const entry of entries ) {
 		
-		let boundingWidth = entry.contentRect.width;
-		if ( computedStyles.get( entry.target ).boxSizing === 'border-box' ) {
+		let boundingWidth = entry.contentRect.width,
+		    computedStyle = cachedComputedStyles.get( entry.target );
+		
+		if ( computedStyle.boxSizing === 'border-box' ) {
 			boundingWidth +=
-				  parseFloat( computedStyles.get( entry.target ).paddingLeft  )
-				+ parseFloat( computedStyles.get( entry.target ).paddingRight )
-				+ parseFloat( computedStyles.get( entry.target ).borderLeft   )
-				+ parseFloat( computedStyles.get( entry.target ).borderRight  );
+				  parseFloat( computedStyle.paddingLeft  )
+				+ parseFloat( computedStyle.paddingRight )
+				+ parseFloat( computedStyle.borderLeft   )
+				+ parseFloat( computedStyle.borderRight  );
 		}
 		
 		let classes = prestoRanges.get( entry.target ).reduce( ( classes, range ) => {
@@ -69,11 +74,11 @@ const ro = new ResizeObserver( entries => {
 			if ( boundingWidth >= range.min &&
 			     boundingWidth <  range.max ) {
 			
-				classes.toAdd = classes.toAdd.union( range.classNames );
+				classes.toAdd = union( classes.toAdd, range.classNames );
 			
 			} else {
 			
-				classes.toRemove = classes.toRemove.union( range.classNames );
+				classes.toRemove = union( classes.toRemove, range.classNames );
 			
 			}
 			
@@ -85,7 +90,7 @@ const ro = new ResizeObserver( entries => {
 		} );
 		
 		// class names can appear in both ranges that apply, *and* in ranges that don’t
-		classes.toRemove = classes.toRemove.difference( classes.toAdd );
+		classes.toRemove = difference( classes.toRemove, classes.toAdd );
 		
 		entry.target.classList.remove( ...classes.toRemove );
 		entry.target.classList.add( ...classes.toAdd );
@@ -156,7 +161,7 @@ const prestoListFromString = ( function( prestoPointsString, element ) { // need
 			            accumulator[ accumulator.length - 1 ] &&
 			            accumulator[ accumulator.length - 1 ].constructor === Set ) {
 				
-				accumulator[ accumulator.length - 1 ] = accumulator[ accumulator.length - 1 ].union( item );
+				accumulator[ accumulator.length - 1 ] = union( accumulator[ accumulator.length - 1 ], item );
 				
 			} else {
 				
@@ -274,23 +279,23 @@ function getComputedLength(value, element) {
 }
 
 
-// 🐒patch’d basic set operations
+// basic set operations
 // from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
 
-Set.prototype.union = function( setB ) {
-	let union = new Set( this );
-	for ( const elem of setB ) {
-		union.add(elem);
+const union = function( setA, setB ) {
+	let result = new Set( setA );
+	for ( const element of setB ) {
+		result.add( element );
 	}
-	return union;
+	return result;
 }
 
-Set.prototype.difference = function( setB ) {
-	let difference = new Set( this );
-	for ( const elem of setB ) {
-		difference.delete( elem );
+const difference = function( setA, setB ) {
+	let result = new Set( setA );
+	for ( const element of setB ) {
+		result.delete( element );
 	}
-	return difference;
+	return result;
 }
 
 
