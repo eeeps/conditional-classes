@@ -2,7 +2,6 @@
 // Presto change-o, its element queries!
 // (While I wait for Houdini.)
 //
-// v 0.1.1, 2017-07-21
 // by Eric Portis
 
 ( function() {
@@ -19,9 +18,12 @@ let sheet = document.createElement( 'style' );
 sheet.innerHTML = '* { --presto-points: initial; }';
 document.head.appendChild( sheet );
 
+// data we're storing about DOM nodes
+const prestoRanges = new WeakMap();
+const computedStyles = new WeakMap();
 
 // as elements come into the DOM, check to see if they have --presto-points
-// if they do, store .prestoRanges on their DOM node and start resizeObserving them
+// if they do, store their prestoRanges and start resizeObserving them
 
 const mo = new MutationObserver( ( mutations ) => {
 
@@ -34,8 +36,8 @@ const mo = new MutationObserver( ( mutations ) => {
 				
 				if ( prestoPoints !== '' ) {
 				
-					newNode.computedStyle = computedStyle; // need to check/account for `box-sizing: border-box`-affected-widths, later
-					newNode.prestoRanges = parsePrestoPoints( prestoPoints, newNode );
+					computedStyles.set( newNode, computedStyle ); // need to check/account for `box-sizing: border-box`-affected-widths, later
+					prestoRanges.set( newNode, parsePrestoPoints( prestoPoints, newNode ) );
 					ro.observe( newNode );
 				
 				}
@@ -47,23 +49,22 @@ const mo = new MutationObserver( ( mutations ) => {
 } );
 
 
-// use the .prestoRanges that we’ll store on each observed element’s DOM node
-// to check-and-possibly-toggle classes whenever the element is resized
+// use the prestoRanges to check-and-possibly-toggle classes whenever the element is resized
 
 const ro = new ResizeObserver( entries => {
 	
 	for ( const entry of entries ) {
 		
 		let boundingWidth = entry.contentRect.width;
-		if ( entry.target.computedStyle.boxSizing === 'border-box' ) {
+		if ( computedStyles.get( entry.target ).boxSizing === 'border-box' ) {
 			boundingWidth +=
-				  parseFloat( entry.target.computedStyle.paddingLeft  )
-				+ parseFloat( entry.target.computedStyle.paddingRight )
-				+ parseFloat( entry.target.computedStyle.borderLeft   )
-				+ parseFloat( entry.target.computedStyle.borderRight  );
+				  parseFloat( computedStyles.get( entry.target ).paddingLeft  )
+				+ parseFloat( computedStyles.get( entry.target ).paddingRight )
+				+ parseFloat( computedStyles.get( entry.target ).borderLeft   )
+				+ parseFloat( computedStyles.get( entry.target ).borderRight  );
 		}
 		
-		let classes = entry.target.prestoRanges.reduce( ( classes, range ) => {
+		let classes = prestoRanges.get( entry.target ).reduce( ( classes, range ) => {
 			
 			if ( boundingWidth >= range.min &&
 			     boundingWidth <  range.max ) {
