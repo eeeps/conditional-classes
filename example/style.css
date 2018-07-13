@@ -5,28 +5,13 @@
  */
  
 .queried {
-	--presto-points:
-		.small
-		2em .medium.border
-		5em .large .border
-		8em .huge;
+	--conditional-classes:
+		(width > 100px) .large;
 	color: red;
-}
-
-.border {
-	border: 3px dotted blue;
-}
-
-.queried.medium {
-	background-color: green;
 }
 
 .queried.large {
 	background-color: yellow;
-}
-
-.queried.huge {
-	background-color: red;
 }
 
 
