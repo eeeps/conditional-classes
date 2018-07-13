@@ -24,15 +24,15 @@ Then use it like this:
 
 ```css
 .container {
-	--conditional-classes: (width > 10em) and (width <= 20em) .medium,
-	                       (width > 20em).large;
+	--conditional-classes: (width > 300px) and (width <= 600px) .medium,
+	                       (width > 600px).large;
 }
 
-.container.medium .element { /* applies when .container’s width is between 10em and 20em */
+.container.medium .element { /* applies when .container’s width is between 300px and 600px */
 	/* do container query stuff */
 }
 
-.container.large .element { /* applies when .container’s width is >= 20em  */
+.container.large .element { /* applies when .container’s width is > 600px  */
 	/* do some other container query stuff */
 }
 ```
@@ -41,8 +41,8 @@ Currently supports querying `width`, `height`, and `aspect-ratio` of elements.
 
 ## TODO
 
-- [ ] `eval( eval() )` 😂😱🚨 lol the “parsing” of this microsyntax is a giant unsafe hack right now do not use this in production anywhere right now, ok? promise‽
-- [ ] units other than `px`
-- [ ] Once ResizeObserver does, support querying different rects?
+- [ ] `eval( eval() )` 😂😱🚨 lol the “parsing” of this microsyntax is a giant unsafe hack right now do not use this in production *anywhere** right now, ok? promise‽
+- [ ] support length units other than `px`
+- [ ] once ResizeObserver does, support querying different rects?
 - [ ] full Media Queries Level 4 range syntax, e.g. `(400px < width <= 900px)`
 
