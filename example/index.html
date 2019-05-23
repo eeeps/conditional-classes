@@ -1,29 +1,67 @@
 <!doctype html>
 <head>
 <meta charset="utf-8" />
-<title>Sorta-simple</title>
+<title>conditional-classes</title>
 <link rel="stylesheet" href="style.css" />
-<script src="ResizeObserverPolyfill.js"></script>
 <script src="../presto-points.js"></script>
 </head>
 
-<h1>Sorta-simple element queries</h1>
+<h1><code>conditional-classes</code></h1>
 
-<div class="container">
-	<div class="item queried">1</div>
-	<div class="item queried">2</div>
-	<div class="item queried">3</div>
-	<div class="item">4</div>
-	<div class="item">5</div>
-	<div class="item">6</div>
+<p>We’re setting classes on things based on conditions. So, you can query a container, and set different styles on descendants, depending on the container’s state:</p>
+
+<pre><code>.container {
+	--if: ( 500px <= inline < 800px ) .medium,
+	      ( inline >= 800px ) .large;
+}
+	
+.container.medium .element {
+	color: var(--purple);
+}
+
+.container.large .element {
+	color: var(--orange);
+}</code></pre>
+
+<div class="container one">
+	<div class="element">1</div>
+	<div class="element">2</div>
+	<div class="element">3</div>
 </div>
 
-<script>
-function addADiv() {
-	let div = document.createElement('div');
-	div.classList.add('item');
-	div.classList.add('queried');
-	div.style.height = '50px';
-	document.body.appendChild(div);
+<p>…or you can query and style those descendant elements directly:</p>
+
+<pre><code>.element {
+	--if: ( 2em <= inline < 4em ) .medium,
+	      ( inline >= 4em ) .large;
 }
-</script>
+
+.element.medium {
+	color: var(--purple);
+}
+
+.element.large {
+	color: var(--orange);
+}</code></pre>
+
+<div class="container two">
+	<div class="element">1</div>
+	<div class="element">2</div>
+	<div class="element">3</div>
+</div>
+
+<p>Watch out for loops!</p>
+
+<pre><code>.element.medium {
+	border: 1em solid var(--darkpurple);
+}</code></pre>
+
+<div class="container three">
+	<div class="element">1</div>
+	<div class="element">2</div>
+	<div class="element">3</div>
+</div>
+
+<p>
+Which is to say: make sure that the things that you’re styling never affect the thing that you’re querying. As of this writing (May 2019), there are a few ideas, but little agreement, about how to best <em>bake this separation into</em> a platform-native feature for this sort of thing, so that web developers never have to worry about it.
+</p>
