@@ -1,36 +1,79 @@
-/* ✨ Element/container queries ✨
- *    Via a --presto-points custom property with alternating class names and lengths, e.g.
- *    	--presto-points: .small 5em .medium 10em .large;
- *    Class names are applied when an element’s width is between adjacent lengths.
- */
+
+/* ✨ Element/container queries ✨ */
+
+.container.one {
+	--if: ( 500px <= inline < 800px ) .medium,
+	      ( inline >= 800px ) .large;
+}
  
-.queried {
-	--conditional-classes:
-		(width > 100px) .large;
-	color: red;
+.container.two .element,
+.container.three .element {
+	--if: ( 3em <= inline < 5em ) .medium,
+	      ( inline >= 5em ) .large;
 }
 
-.queried.large {
-	background-color: yellow;
+.element {
+	background: var(--green);
+}
+
+.element.medium,
+.container.medium .element {
+	background: var(--purple);
+}
+
+.element.large,
+.container.large .element {
+	background: var(--orange);
+}
+
+/* because the border affects the .element's content-box size
+   which is what we're querying!
+   this creates a loop at the transition between .small/.medium */
+.container.three .element.medium {
+	border: 1rem solid var(--darkpurple);
 }
 
 
 /* Base styles */
 
 :root {
-	font-family: menlo, monospace;
+	font-family: system-ui, sans-serif;
+	font-size: 1.25rem;
+	padding-bottom: 5em;
+	--green: #43b390;
+	--purple: #ac8dd9;
+	--orange: #ce8a4c;
+	--darkpurple: #7c6997;
 }
 
 .container {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
-	grid-gap: 10px;
+	grid-gap: 1rem;
 }
 
-.item {
+.element {
 	color: white;
-	background-color: black;
 	padding: 1em;
 	text-align: center;
 	font-size: 2em;
+}
+
+pre {
+	background: #eee;
+	padding: 1em;
+	border-radius: 0.5em;
+	-moz-tab-size: 2;
+	tab-size: 2;
+	margin: 1em;
+}
+
+p {
+	margin: 2em 1em 1em 1em;
+	line-height: 1.3;
+	max-width: 60ch;
+}
+
+code {
+	font-family: Menlo, Consolas, monospace;
 }

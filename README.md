@@ -5,7 +5,7 @@ I made this to experiment with and learn about container queries. If you want to
 
 ## Requirements   
 
-`conditional-classes.js` requires [ResizeObserver](https://github.com/WICG/ResizeObserver), which is currently only implemented behind a flag in Chrome. Luckily, there’s an excellent [polyfill](https://github.com/que-etc/resize-observer-polyfill).
+`conditional-classes.js` requires [ResizeObserver](https://github.com/WICG/ResizeObserver). ResizeObserver is shipping in Blink and coming soon to Firefox and Safari; in the meantime there’s an excellent [polyfill](https://github.com/que-etc/resize-observer-polyfill).
 
 
 ## Usage
@@ -24,25 +24,22 @@ Then use it like this:
 
 ```css
 .container {
-	--conditional-classes: (width > 300px) and (width <= 600px) .medium,
-	                       (width > 600px) .large;
+	--if: (300px < inline <= 600px) .medium,
+	      (inline > 600px) .large;
 }
 
-.container.medium .element { /* applies when .container’s width is between 300px and 600px */
+.container.medium .element {
 	/* do container query stuff */
 }
 
-.container.large .element { /* applies when .container’s width is > 600px  */
+.container.large .element {
 	/* do some other container query stuff */
 }
 ```
 
-Currently supports querying the `width`, `height`, and `aspect-ratio` of elements.
+Currently supports querying the `inline` and `block` content-box sizes of elements.
+
 
 ## TODO
 
-- [ ] `eval( eval() )` 😂😱🚨 lol the “parsing” of this microsyntax is a giant unsafe hack right now do not use this in production *anywhere* right now, ok? promise‽
-- [ ] support length units other than `px`
-- [ ] once ResizeObserver does, support querying different rects?
-- [ ] full Media Queries Level 4 range syntax, e.g. `(400px < width <= 900px)`
-
+- Right now we check for `--if`s when elements are inserted into the DOM, and then never check for or look at them again. A better script would respond appropriately to updates to CSS & HTML.
