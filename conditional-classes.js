@@ -196,7 +196,10 @@ const parseConditionalClasses = ( function( conditionalClassesString, element ) 
 
 	return conditionalClassesString.split( ',' ).reduce( ( accumulator, conditionalClassString ) => {
 		const [ queryString, classesString ] = splitPair( conditionalClassString );
-		const queryTestFunctions = parseQuery( queryString, element );
+		const queries = queryString.split( /\s+and\s+/ );
+		const queryTestFunctions = queries.reduce( ( arrayOfFns, queryStr ) => {
+			return arrayOfFns.concat( parseQuery( queryStr, element ) );
+		}, [] );
 		const setOfClasses = classStringToSet( classesString );
 		accumulator.set( queryTestFunctions, setOfClasses );
 		return accumulator;

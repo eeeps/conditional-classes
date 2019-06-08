@@ -2,7 +2,7 @@
 /* ✨ Element/container queries ✨ */
 
 .container.one {
-	--if: ( 500px <= inline < 800px ) .medium,
+	--if: ( inline >= 500px ) and ( inline < 800px ) .medium,
 	      ( inline >= 800px ) .large;
 }
  
