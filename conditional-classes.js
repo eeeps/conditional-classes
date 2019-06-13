@@ -196,10 +196,7 @@ const parseConditionalClasses = ( function( conditionalClassesString, element ) 
 
 	return conditionalClassesString.split( ',' ).reduce( ( accumulator, conditionalClassString ) => {
 		const [ queryString, classesString ] = splitPair( conditionalClassString );
-		const queries = queryString.split( /\s+and\s+/ );
-		const queryTestFunctions = queries.reduce( ( arrayOfFns, queryStr ) => {
-			return arrayOfFns.concat( parseQuery( queryStr, element ) );
-		}, [] );
+		const queryTestFunctions = parseQuery( queryString, element );
 		const setOfClasses = classStringToSet( classesString );
 		accumulator.set( queryTestFunctions, setOfClasses );
 		return accumulator;
@@ -277,35 +274,67 @@ logicalToPhysical = {
 // query target ([content{default}|border]-[inline|block] size, which is measured from layout and may change over time)
 // is greater than, less than, equal to, etc
 // a given length (constant)
-function constructQuery( queryTarget, relationalOperator, givenLength ) {
+function constructQuery( queryTarget, relationalOperator, someNumber ) {
 	
-	const s = queryTarget.split('-');
+	let box = 'content', // optional, can be 'content' or 'border'; content is default
+	    queriedProperty; // can be 'height', 'width', 'inline', 'block', or 'aspect-ratio'
+
+	const remainingTokens = queryTarget.split('-');
 	
-	let box = 'content',
-	    dimension,
-	    queryTargetLength;
+	let currentToken = remainingTokens.shift();
+	if ( currentToken === 'content' || currentToken === 'border' ) {
+		box = currentToken;
+		currentToken = remainingTokens.shift();
+	}
 	
-	if ( s.length === 2 ) {
-		box = s[ 0 ];
-		dimension = s[ 1 ];
+	if ( currentToken === 'aspect' && remainingTokens[ 0 ] === 'ratio' ) {
+		queriedProperty = 'aspect-ratio';
 	} else {
-		dimension = s[ 0 ];
+		queriedProperty = currentToken;
+	}
+	
+	// if we support new and improved ResizeObserver
+	let fancyResizeObserver = false;
+	if ( 'contentBoxSize' in ResizeObserverEntry.prototype  &&
+	     'borderBoxSize' in ResizeObserverEntry.prototype ) {
+		fancyResizeObserver = true;
 	}
 	
 	return function( entry ) {
 	
-		// if we support new and improved ResizeObserver
-		if ( 'contentBoxSize' in ResizeObserverEntry.prototype  &&
-		     'paddingBoxSize' in ResizeObserverEntry.prototype ) {
-			queryTargetLength = entry[ `${ box }BoxSize` ][ `${ dimension }Size` ];
-		} else {
-			// we're on ResizeObserver v1 and only get a contentRect (and can only compare to content size)
-			queryTargetLength = entry.contentRect[ logicalToPhysical[ dimension ] ];
-		}
+		let queriedQuantity;
 	
+		if ( queriedProperty === 'aspect-ratio' ) {
+		
+			if ( fancyResizeObserver ) {
+				queriedQuantity = entry[ `${ box }BoxSize` ].inlineSize / 
+				                  entry[ `${ box }BoxSize` ].blockSize;
+			} else {
+				queriedQuantity = entry.contentRect.width / 
+				                  entry.contentRect.height;
+			}
+		
+		} else if ( queriedProperty === 'inline' || queriedProperty === 'block' ) {
+
+			if ( fancyResizeObserver ) {
+				queriedQuantity = entry[ `${ box }BoxSize` ][ `${ queriedProperty }Size` ];
+			} else {
+				// TODO alerts about querying border-box size when fancy=false
+				queriedQuantity = entry.contentRect[ logicalToPhysical[ queriedProperty ] ];
+				console.warn( `Conditional class query asked for an ${ queriedProperty } size, but this browser only supports querying height and width. So I queried ${ logicalToPhysical[ queriedProperty ] } instead.` );
+			}
+
+		} else if ( queriedProperty === 'height' || queriedProperty === 'width' ) {
+			
+			// TODO alerts about querying border-box size when fancy=false
+			// TODO what to do about border-height and border-width queries? (instead of content-)
+			queriedQuantity = entry.contentRect[ logicalToPhysical[ queriedProperty ] ];
+		
+		}
+		
 		return operators[ relationalOperator ](
-			queryTargetLength,
-			givenLength
+			queriedQuantity,
+			someNumber
 		);
 	}
 	

@@ -1,0 +1,25 @@
+<!doctype html>
+<head>
+<meta charset="utf-8" />
+<title>conditional-classes-aspect-ratios</title>
+<script src="../conditional-classes.js"></script>
+<style>
+.element {
+	background: steelblue;
+	--if: (aspect-ratio > 1) .wide,
+	      (inline > 300px) .large;
+	height: 10em;
+	width: 10em;
+	overflow: hidden;
+	resize: both;
+}
+.element.wide {
+	background: tomato;
+}
+.element.wide.large {
+	background: hotpink;
+}
+</style>
+</head>
+
+	<div class="element">1</div>
