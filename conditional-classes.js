@@ -245,7 +245,7 @@ function parseQuery( string, el ) {
 		if ( !captured ) { throw 'invalid media query' }
 
 		return [
-			constructQuery( captured[ 3 ], flipped[ captured[ 2 ] ], getComputedLength( captured[ 1 ], el ) ), // TODO change parseInt to getComputedLength...
+			constructQuery( captured[ 3 ], flipped[ captured[ 2 ] ], getComputedLength( captured[ 1 ], el ) ),
 			constructQuery( captured[ 3 ], captured[ 4 ], getComputedLength( captured[ 5 ], el ) )
 		];
 		
