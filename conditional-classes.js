@@ -227,7 +227,7 @@ function parseQuery( string, el ) {
 	
 	if ( numberOfSigns === 1 ) {
 		
-		const captured = string.match( /^\(\s*([\w\d\-]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-]+)\s*\)$/ );
+		const captured = string.match( /^\(\s*([\w\d\-\.]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-\.]+)\s*\)$/ );
 		
 		if ( !captured ) { throw 'invalid media query'; }
 		
@@ -237,7 +237,7 @@ function parseQuery( string, el ) {
 
 	} else if ( numberOfSigns === 2 ) {
 
-		const captured = string.match( /^\(\s*([\w\d\-]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-]+)\s*\)$/ );
+		const captured = string.match( /^\(\s*([\w\d\-\.]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-\.]+)\s*(\>=|\<=|\>|\<|=)\s*([\w\d\-\.]+)\s*\)$/ );
 
 		if ( !captured ) { throw 'invalid media query' }
 
@@ -287,10 +287,14 @@ function constructQuery( queryTarget, relationalOperator, someNumber ) {
 		currentToken = remainingTokens.shift();
 	}
 	
-	if ( currentToken === 'aspect' && remainingTokens[ 0 ] === 'ratio' ) {
+	if ( currentToken === 'aspect' && remainingTokens.shift() === 'ratio' ) {
 		queriedProperty = 'aspect-ratio';
 	} else {
 		queriedProperty = currentToken;
+	}
+	
+	if ( remainingTokens.length > 0 ) {
+		throw `"${ queryTarget }" is not a valid query target.`
 	}
 	
 	// if we support new and improved ResizeObserver
