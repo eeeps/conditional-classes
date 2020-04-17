@@ -13,7 +13,7 @@
 <p>So, you can query a container, and set different styles on descendants, depending on the container’s state:</p>
 
 <pre><code>.container {
-	--if: ( 500px <= inline) and ( inline < 800px ) .medium,
+	--if: ( 500px <= inline < 800px ) .medium,
 	      ( inline >= 800px ) .large;
 }
 	
